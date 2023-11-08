@@ -1,11 +1,13 @@
+@Library('groovylibrary') _
 pipeline {
   agent any
   stages {
     stage('Build') {
       steps {
-        @Library('jenkins-shared-library')
-        jenkins-shared-library.hello("hi")
         echo "building"
+        script{
+            test_library.hello("TEST THIS LIBRARY");
+        }
         sleep 10
       }
     }
