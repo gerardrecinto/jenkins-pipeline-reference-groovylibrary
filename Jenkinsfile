@@ -3,6 +3,8 @@ pipeline {
   stages {
     stage('Build') {
       steps {
+        @Library('jenkins-shared-library')
+        jenkins-shared-library.hello("hi")
         echo "building"
         sleep 10
       }
