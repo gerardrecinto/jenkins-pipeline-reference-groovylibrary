@@ -2,7 +2,7 @@
 
 /**
  * Reference pipeline for Python microservices.
- * Uses the groovylibrary shared library for build, test, Docker, K8s, and Slack steps.
+ * Uses the groovylibrary shared library for build, test, Docker, K8s, Slack, and Teams steps.
  * LLM failure triage fires automatically on any stage failure.
  */
 pipeline {
@@ -27,9 +27,10 @@ pipeline {
     }
 
     environment {
-        SERVICE_NAME = 'my-python-service'
-        REGISTRY     = 'registry.example.com'
+        SERVICE_NAME  = 'my-python-service'
+        REGISTRY      = 'registry.example.com'
         SLACK_CHANNEL = '#ci-deployments'
+        TEAMS_WEBHOOK_CRED = 'teams-webhook-url'
     }
 
     options {
@@ -120,6 +121,11 @@ pipeline {
                 webhookCredential: 'slack-webhook-url',
                 message: "Deployed ${env.SERVICE_NAME} to ${params.ENVIRONMENT} (#${env.BUILD_NUMBER})"
             )
+            notifyTeams(
+                status: 'SUCCESS',
+                webhookCredential: env.TEAMS_WEBHOOK_CRED,
+                message: "Deployed ${env.SERVICE_NAME} to ${params.ENVIRONMENT} (#${env.BUILD_NUMBER})"
+            )
         }
         failure {
             // LLM triages the log and posts root cause to Slack before the failure notification
@@ -135,12 +141,20 @@ pipeline {
                 channel: env.SLACK_CHANNEL,
                 webhookCredential: 'slack-webhook-url'
             )
+            notifyTeams(
+                status: 'FAILURE',
+                webhookCredential: env.TEAMS_WEBHOOK_CRED
+            )
         }
         unstable {
             notifySlack(
                 status: 'UNSTABLE',
                 channel: env.SLACK_CHANNEL,
                 webhookCredential: 'slack-webhook-url'
+            )
+            notifyTeams(
+                status: 'UNSTABLE',
+                webhookCredential: env.TEAMS_WEBHOOK_CRED
             )
         }
         always {
